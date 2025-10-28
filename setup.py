@@ -68,7 +68,7 @@ def setup_mcp_server():
     print(f"Running: {' '.join(cmd)}")
     
     try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=5, shell=True)
         print("✅ Server added to Claude Code successfully!")
         if result.stdout:
             print(result.stdout)

@@ -13,8 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
-from dataclasses import dataclass, asdict
-import mcp.server
+from dataclasses import dataclass
 from mcp.server import Server
 from mcp.types import Resource, Tool, TextContent, CallToolResult
 import tiktoken  # For token counting
@@ -370,13 +369,14 @@ class GuidelinesServer:
                     file_path.write_text(context.content)
                 
                 return CallToolResult(
-                    content=[TextContent(text=f"Added context: {context.id}")]
+                    content=[TextContent(type="text", text=f"Added context: {context.id}")]
                 )
             
             elif name == "remove_guideline":
                 success = self.context_manager.remove_context(arguments["id"])
                 return CallToolResult(
                     content=[TextContent(
+                        type="text",
                         text=f"{'Removed' if success else 'Failed to remove'} context: {arguments['id']}"
                     )]
                 )
@@ -385,6 +385,7 @@ class GuidelinesServer:
                 self.context_manager.increment_tokens(arguments["text"])
                 return CallToolResult(
                     content=[TextContent(
+                        type="text",
                         text=f"Tracked {len(self.context_manager.tokenizer.encode(arguments['text']))} tokens"
                     )]
                 )
@@ -392,7 +393,7 @@ class GuidelinesServer:
             elif name == "get_context_summary":
                 summary = self.context_manager.get_context_summary()
                 return CallToolResult(
-                    content=[TextContent(text=json.dumps(summary, indent=2))]
+                    content=[TextContent(type="text", text=json.dumps(summary, indent=2))]
                 )
             
             elif name == "force_refresh":
@@ -410,11 +411,11 @@ class GuidelinesServer:
                 self.context_manager.add_context(git_context)
                 
                 return CallToolResult(
-                    content=[TextContent(text="Refreshed git status and contexts")]
+                    content=[TextContent(type="text", text="Refreshed git status and contexts")]
                 )
             
             return CallToolResult(
-                content=[TextContent(text=f"Unknown tool: {name}")]
+                content=[TextContent(type="text", text=f"Unknown tool: {name}")]
             )
     
     async def _update_git_status_periodically(self) -> None:
@@ -437,7 +438,9 @@ class GuidelinesServer:
     
     async def run(self) -> None:
         """Run the MCP server."""
-        async with mcp.server.stdio_server() as (read_stream, write_stream):
+        from mcp.server.stdio import stdio_server
+
+        async with stdio_server() as (read_stream, write_stream):
             logger.info("Guidelines MCP Server started")
             await self.server.run(
                 read_stream,

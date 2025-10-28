@@ -1,0 +1,1 @@
+This is a test guideline to verify the MCP server functionality.
