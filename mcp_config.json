@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "guidelines": {
+      "command": "python",
+      "args": [
+        "/path/to/mcp_guidelines_server.py",
+        "/path/to/your/project"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      },
+      "description": "Guidelines and Git Status Tracker with Smart Context Repetition"
+    }
+  }
+}
