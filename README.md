@@ -1,0 +1,2 @@
+# shalts
+Commandments for AIs
