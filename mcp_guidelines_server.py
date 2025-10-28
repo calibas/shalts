@@ -19,7 +19,14 @@ from mcp.types import Resource, Tool, TextContent, CallToolResult
 import tiktoken  # For token counting
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('mcp_guidelines_server.log'),
+        logging.StreamHandler()
+    ]
+)
 logger = logging.getLogger(__name__)
 
 
@@ -70,11 +77,15 @@ class GitTracker:
                 cwd=self.repo_path,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                timeout=30,  # 5 second timeout to prevent hanging
+                shell=True
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError as e:
             return f"Error: {e.stderr}"
+        except subprocess.TimeoutExpired:
+            return f"Error: Git command timed out"
     
     def _get_current_branch(self) -> str:
         return self._run_git_command(["branch", "--show-current"])
@@ -397,22 +408,31 @@ class GuidelinesServer:
                 )
             
             elif name == "force_refresh":
-                # Update git status
-                git_status = self.git_tracker.get_status()
-                
-                # Create/update git status context
-                git_context = ContextItem(
-                    id="git_status",
-                    content=json.dumps(git_status, indent=2),
-                    priority=6,
-                    category="state",
-                    repeat_after_tokens=2000
-                )
-                self.context_manager.add_context(git_context)
-                
-                return CallToolResult(
-                    content=[TextContent(type="text", text="Refreshed git status and contexts")]
-                )
+                try:
+                    logger.info("Starting force_refresh")
+                    # Update git status
+                    git_status = self.git_tracker.get_status()
+                    logger.info("Got git status")
+
+                    # Create/update git status context
+                    git_context = ContextItem(
+                        id="git_status",
+                        content=json.dumps(git_status, indent=2),
+                        priority=6,
+                        category="state",
+                        repeat_after_tokens=2000
+                    )
+                    self.context_manager.add_context(git_context)
+                    logger.info("Added git context")
+
+                    return CallToolResult(
+                        content=[TextContent(type="text", text="Refreshed git status and contexts")]
+                    )
+                except Exception as e:
+                    logger.error(f"Error in force_refresh: {e}")
+                    return CallToolResult(
+                        content=[TextContent(type="text", text=f"Error refreshing: {str(e)}")]
+                    )
             
             return CallToolResult(
                 content=[TextContent(type="text", text=f"Unknown tool: {name}")]

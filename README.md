@@ -25,7 +25,7 @@ With lots of tokens, context gets "thin", important things can be forgotten. A f
 
 Based upon my experiments, though this needs better confirmation, LLMs take unusual language more "seriously". We can use this, along with repetition, to make sure certain things are less likely to fade from context.
 
-(Full conversation with Claude about this)[https://claude.ai/share/18ae84e5-84b9-489c-b119-d7914c9a2bb3]
+[Full conversation with Claude about this](https://claude.ai/share/18ae84e5-84b9-489c-b119-d7914c9a2bb3)
 
 ## Experiments:
 
